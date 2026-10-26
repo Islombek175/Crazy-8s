@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   inspirationPrompts: false,
   soundEffects: false,
   reducedMotion: false,
+  language: 'en',
+  theme: 'light',
 };
 
 // Check if IndexedDB is supported

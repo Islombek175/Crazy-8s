@@ -4,6 +4,10 @@ export type WorkspaceMode = 'draw' | 'write' | 'both';
 
 export type SessionStatus = 'draft' | 'running' | 'paused' | 'completed';
 
+export type Language = 'en' | 'uz';
+
+export type ThemeMode = 'light' | 'dark';
+
 export interface Point {
   x: number;
   y: number;
@@ -64,6 +68,8 @@ export interface UserSettings {
   inspirationPrompts: boolean;
   soundEffects: boolean;
   reducedMotion: boolean;
+  language: Language;
+  theme: ThemeMode;
 }
 
 export type ViewState = 

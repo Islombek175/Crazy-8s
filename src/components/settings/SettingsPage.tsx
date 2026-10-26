@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { UserSettings } from '../../types';
+import { getTranslation } from '../../i18n/translations';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import {
   Type,
@@ -7,6 +8,9 @@ import {
   Download,
   Upload,
   Check,
+  Moon,
+  Sun,
+  Globe,
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -24,6 +28,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onImportBackup,
   onClearAllData,
 }) => {
+  const t = getTranslation(settings.language || 'en');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importStatus, setImportStatus] = useState<{ message: string; isError: boolean } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -45,19 +50,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const res = await onImportBackup(text);
       if (res.success) {
         setImportStatus({
-          message: `Successfully imported ${res.count} brainstorming session(s).`,
+          message: settings.language === 'uz'
+            ? `${res.count} ta sessiya muvaffaqiyatli yuklandi.`
+            : `Successfully imported ${res.count} brainstorming session(s).`,
           isError: false,
         });
       } else {
         setImportStatus({
-          message: res.error || 'Failed to import backup.',
+          message: res.error || (settings.language === 'uz' ? 'Nusxani yuklashda xatolik yuz berdi.' : 'Failed to import backup.'),
           isError: true,
         });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown read error';
       setImportStatus({
-        message: `File read error: ${msg}`,
+        message: `${settings.language === 'uz' ? 'Fayl xatosi' : 'File read error'}: ${msg}`,
         isError: true,
       });
     }
@@ -68,44 +75,129 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F8F7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 flex flex-col bg-[#F8F7F2] dark:bg-[#141412] text-[#171717] dark:text-[#F8F7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto w-full space-y-10">
         {/* Header */}
-        <div className="border-b border-[#D8D6CE] pb-6 flex items-baseline justify-between">
+        <div className="border-b border-[#D8D6CE] dark:border-[#33322D] pb-6 flex items-baseline justify-between">
           <div>
-            <span className="font-mono text-xs uppercase tracking-widest text-[#77756F]">
-              Preferences & Data
+            <span className="font-mono text-xs uppercase tracking-widest text-[#77756F] dark:text-[#88867F]">
+              {t.settingsEyebrow}
             </span>
-            <h1 className="font-editorial-heading text-4xl sm:text-5xl font-normal text-[#171717] mt-1">
-              Settings
+            <h1 className="font-editorial-heading text-4xl sm:text-5xl font-normal text-[#171717] dark:text-[#F8F7F2] mt-1">
+              {t.settingsTitle}
             </h1>
           </div>
 
           {saveBanner && (
-            <span className="text-xs font-mono text-[#171717] flex items-center gap-1.5 animate-in fade-in">
+            <span className="text-xs font-mono text-[#171717] dark:text-[#F8F7F2] flex items-center gap-1.5 animate-in fade-in">
               <Check className="w-3.5 h-3.5" />
-              <span>Saved</span>
+              <span>{t.settingsSaved}</span>
             </span>
           )}
         </div>
 
-        {/* Section 1: Session & Workspace Defaults */}
-        <section className="bg-[#FAF9F5] border border-[#D8D6CE] p-6 sm:p-8 space-y-6">
-          <h2 className="font-editorial-heading text-2xl font-bold text-[#171717]">
-            Session Defaults
+        {/* Section 1: Appearance & Language Toggles */}
+        <section className="bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] p-6 sm:p-8 space-y-6">
+          <h2 className="font-editorial-heading text-2xl font-bold text-[#171717] dark:text-[#F8F7F2]">
+            {settings.language === 'uz' ? 'Ko\'rinish va Til' : 'Appearance & Language'}
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Language Selector */}
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] mb-2 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-[#77756F] dark:text-[#88867F]" />
+                <span>{t.languagePreferenceTitle}</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleUpdate({ language: 'en' })}
+                  className={`py-3 px-4 border text-left transition-colors ${
+                    settings.language === 'en'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
+                  }`}
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider block">English</span>
+                  <span className="text-[11px] text-[#77756F] dark:text-[#88867F]">Default</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleUpdate({ language: 'uz' })}
+                  className={`py-3 px-4 border text-left transition-colors ${
+                    settings.language === 'uz'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
+                  }`}
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider block">O'zbek tili</span>
+                  <span className="text-[11px] text-[#77756F] dark:text-[#88867F]">Lotin yozuvida</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Theme Mode Selector */}
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] mb-2 flex items-center gap-1.5">
+                {settings.theme === 'dark' ? <Moon className="w-3.5 h-3.5 text-[#77756F] dark:text-[#88867F]" /> : <Sun className="w-3.5 h-3.5 text-[#77756F] dark:text-[#88867F]" />}
+                <span>{t.themePreferenceTitle}</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleUpdate({ theme: 'light' })}
+                  className={`py-3 px-4 border text-left transition-colors ${
+                    settings.theme === 'light'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
+                  }`}
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider block flex items-center gap-1.5">
+                    <Sun className="w-3 h-3" />
+                    <span>Light</span>
+                  </span>
+                  <span className="text-[11px] text-[#77756F] dark:text-[#88867F]">{t.themeLightLabel}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleUpdate({ theme: 'dark' })}
+                  className={`py-3 px-4 border text-left transition-colors ${
+                    settings.theme === 'dark'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
+                  }`}
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider block flex items-center gap-1.5">
+                    <Moon className="w-3 h-3" />
+                    <span>Dark</span>
+                  </span>
+                  <span className="text-[11px] text-[#77756F] dark:text-[#88867F]">{t.themeDarkLabel}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Session & Workspace Defaults */}
+        <section className="bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] p-6 sm:p-8 space-y-6">
+          <h2 className="font-editorial-heading text-2xl font-bold text-[#171717] dark:text-[#F8F7F2]">
+            {t.sessionDefaults}
           </h2>
 
           <div className="space-y-6">
             {/* Default Duration */}
             <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] mb-2">
-                Default Sprint Duration
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] mb-2">
+                {t.defaultSprintDuration}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { label: '4 Minutes', value: 240, desc: '30s per panel' },
-                  { label: '8 Minutes', value: 480, desc: '60s per panel (Standard)' },
-                  { label: '12 Minutes', value: 720, desc: '90s per panel' },
+                  { label: t.duration4Min, value: 240, desc: t.duration30sPerPanel },
+                  { label: t.duration8Min, value: 480, desc: t.duration60sPerPanel },
+                  { label: t.duration12Min, value: 720, desc: t.duration90sPerPanel },
                 ].map((item) => (
                   <button
                     key={item.value}
@@ -113,14 +205,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     onClick={() => handleUpdate({ defaultDuration: item.value })}
                     className={`p-3.5 border text-left transition-colors ${
                       settings.defaultDuration === item.value
-                        ? 'bg-[#171717] text-[#F8F7F2] border-[#171717]'
-                        : 'bg-[#F8F7F2] text-[#171717] border-[#D8D6CE] hover:border-[#171717]'
+                        ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                        : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
                     }`}
                   >
                     <span className="font-mono text-xs font-bold uppercase tracking-wider block">
                       {item.label}
                     </span>
-                    <span className={`text-[11px] block mt-0.5 ${settings.defaultDuration === item.value ? 'text-[#D8D6CE]' : 'text-[#77756F]'}`}>
+                    <span className={`text-[11px] block mt-0.5 ${settings.defaultDuration === item.value ? 'text-[#D8D6CE] dark:text-[#33322D]' : 'text-[#77756F] dark:text-[#88867F]'}`}>
                       {item.desc}
                     </span>
                   </button>
@@ -130,8 +222,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
             {/* Default Mode */}
             <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] mb-2">
-                Default Workspace Modality
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] mb-2">
+                {t.defaultWorkspaceModality}
               </label>
               <div className="grid grid-cols-2 gap-3 max-w-md">
                 <button
@@ -139,12 +231,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   onClick={() => handleUpdate({ defaultWorkspaceMode: 'draw' })}
                   className={`flex items-center justify-center gap-2 py-3 px-4 border text-xs font-mono uppercase tracking-wider transition-colors ${
                     settings.defaultWorkspaceMode === 'draw'
-                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717]'
-                      : 'bg-[#F8F7F2] text-[#171717] border-[#D8D6CE] hover:border-[#171717]'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
                   }`}
                 >
                   <Paintbrush className="w-4 h-4" />
-                  <span>Drawing First</span>
+                  <span>{t.drawingFirst}</span>
                 </button>
 
                 <button
@@ -152,114 +244,114 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   onClick={() => handleUpdate({ defaultWorkspaceMode: 'write' })}
                   className={`flex items-center justify-center gap-2 py-3 px-4 border text-xs font-mono uppercase tracking-wider transition-colors ${
                     settings.defaultWorkspaceMode === 'write'
-                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717]'
-                      : 'bg-[#F8F7F2] text-[#171717] border-[#D8D6CE] hover:border-[#171717]'
+                      ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                      : 'bg-[#F8F7F2] dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
                   }`}
                 >
                   <Type className="w-4 h-4" />
-                  <span>Writing First</span>
+                  <span>{t.writingFirst}</span>
                 </button>
               </div>
             </div>
 
             {/* Feature Toggles */}
-            <div className="divide-y divide-[#D8D6CE] pt-2">
+            <div className="divide-y divide-[#D8D6CE] dark:divide-[#33322D] pt-2">
               {/* Auto progression */}
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-[#171717] block">
-                    Automatic panel progression
+                  <span className="text-sm font-semibold text-[#171717] dark:text-[#F8F7F2] block">
+                    {t.autoProgressionTitle}
                   </span>
-                  <span className="text-xs text-[#77756F]">
-                    Advance active panel focus evenly (e.g. 1 min / idea) during sprints.
+                  <span className="text-xs text-[#77756F] dark:text-[#88867F]">
+                    {t.autoProgressionSettingDesc}
                   </span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.autoProgression}
                   onChange={(e) => handleUpdate({ autoProgression: e.target.checked })}
-                  className="w-4 h-4 accent-[#171717]"
+                  className="w-4 h-4 accent-[#171717] dark:accent-[#F8F7F2]"
                 />
               </div>
 
               {/* Inspiration prompts */}
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-[#171717] block">
-                    Inspiration prompts banner
+                  <span className="text-sm font-semibold text-[#171717] dark:text-[#F8F7F2] block">
+                    {t.promptsToggleTitle}
                   </span>
-                  <span className="text-xs text-[#77756F]">
-                    Show thoughtful creative prompts above the workspace.
+                  <span className="text-xs text-[#77756F] dark:text-[#88867F]">
+                    {t.inspirationSettingDesc}
                   </span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.inspirationPrompts}
                   onChange={(e) => handleUpdate({ inspirationPrompts: e.target.checked })}
-                  className="w-4 h-4 accent-[#171717]"
+                  className="w-4 h-4 accent-[#171717] dark:accent-[#F8F7F2]"
                 />
               </div>
 
               {/* Sound effects */}
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-[#171717] block">
-                    Tactile sound effects
+                  <span className="text-sm font-semibold text-[#171717] dark:text-[#F8F7F2] block">
+                    {t.soundToggleTitle}
                   </span>
-                  <span className="text-xs text-[#77756F]">
-                    Play synthesized gentle clicks and completion chimes via Web Audio.
+                  <span className="text-xs text-[#77756F] dark:text-[#88867F]">
+                    {t.soundSettingDesc}
                   </span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.soundEffects}
                   onChange={(e) => handleUpdate({ soundEffects: e.target.checked })}
-                  className="w-4 h-4 accent-[#171717]"
+                  className="w-4 h-4 accent-[#171717] dark:accent-[#F8F7F2]"
                 />
               </div>
 
               {/* Reduced motion */}
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-[#171717] block">
-                    Reduced motion
+                  <span className="text-sm font-semibold text-[#171717] dark:text-[#F8F7F2] block">
+                    {t.reducedMotionSetting}
                   </span>
-                  <span className="text-xs text-[#77756F]">
-                    Minimize transitions and visual animations across all views.
+                  <span className="text-xs text-[#77756F] dark:text-[#88867F]">
+                    {t.reducedMotionSettingDesc}
                   </span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.reducedMotion}
                   onChange={(e) => handleUpdate({ reducedMotion: e.target.checked })}
-                  className="w-4 h-4 accent-[#171717]"
+                  className="w-4 h-4 accent-[#171717] dark:accent-[#F8F7F2]"
                 />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section 2: Keyboard Shortcuts Reference */}
-        <section className="bg-[#FAF9F5] border border-[#D8D6CE] p-6 sm:p-8 space-y-4">
-          <h2 className="font-editorial-heading text-2xl font-bold text-[#171717]">
-            Keyboard Shortcuts
+        {/* Section 3: Keyboard Shortcuts Reference */}
+        <section className="bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] p-6 sm:p-8 space-y-4">
+          <h2 className="font-editorial-heading text-2xl font-bold text-[#171717] dark:text-[#F8F7F2]">
+            {t.keyboardShortcutsSection}
           </h2>
-          <p className="text-xs text-[#77756F]">
-            Quickly navigate and control your sessions with single keystrokes.
+          <p className="text-xs text-[#77756F] dark:text-[#88867F]">
+            {t.keyboardShortcutsSectionDesc}
           </p>
 
-          <div className="divide-y divide-[#D8D6CE] text-sm">
+          <div className="divide-y divide-[#D8D6CE] dark:divide-[#33322D] text-sm">
             {[
-              { key: 'Space', action: 'Pause / Resume the active countdown timer' },
-              { key: 'G', action: 'Toggle between 8-panel grid and focused single panel' },
-              { key: '← / →', action: 'Navigate to previous / next idea panel' },
-              { key: 'Z', action: 'Undo last drawing stroke on active canvas' },
-              { key: 'Shift + Z', action: 'Redo previously undone drawing stroke' },
-              { key: 'Esc', action: 'Exit focused mode or dismiss dialogs' },
+              { key: 'Space', action: t.shortcutSpace },
+              { key: 'G', action: t.shortcutG },
+              { key: '← / →', action: t.shortcutArrows },
+              { key: 'Z', action: t.shortcutZ },
+              { key: 'Shift + Z', action: t.shortcutShiftZ },
+              { key: 'Esc', action: t.shortcutEsc },
             ].map((s, idx) => (
               <div key={idx} className="py-2.5 flex items-center justify-between">
-                <span className="text-xs font-sans text-[#171717]">{s.action}</span>
-                <kbd className="px-2.5 py-1 bg-[#F0EFE9] border border-[#D8D6CE] font-mono text-xs text-[#171717]">
+                <span className="text-xs font-sans text-[#171717] dark:text-[#F8F7F2]">{s.action}</span>
+                <kbd className="px-2.5 py-1 bg-[#F0EFE9] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] font-mono text-xs text-[#171717] dark:text-[#F8F7F2]">
                   {s.key}
                 </kbd>
               </div>
@@ -267,14 +359,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </section>
 
-        {/* Section 3: Data Management & Backup */}
-        <section className="bg-[#FAF9F5] border border-[#D8D6CE] p-6 sm:p-8 space-y-6">
-          <div className="border-b border-[#D8D6CE] pb-3">
-            <h2 className="font-editorial-heading text-2xl font-bold text-[#171717]">
-              Local Data & Privacy
+        {/* Section 4: Data Management & Backup */}
+        <section className="bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] p-6 sm:p-8 space-y-6">
+          <div className="border-b border-[#D8D6CE] dark:border-[#33322D] pb-3">
+            <h2 className="font-editorial-heading text-2xl font-bold text-[#171717] dark:text-[#F8F7F2]">
+              {t.localDataPrivacy}
             </h2>
-            <p className="text-xs text-[#77756F] mt-1">
-              All sketches and sessions are stored locally in your browser's IndexedDB database. They never leave your device without your consent.
+            <p className="text-xs text-[#77756F] dark:text-[#88867F] mt-1">
+              {t.localDataDesc}
             </p>
           </div>
 
@@ -282,8 +374,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div
               className={`p-3 text-xs font-mono border ${
                 importStatus.isError
-                  ? 'border-red-600 bg-red-50 text-red-700'
-                  : 'border-green-600 bg-green-50 text-green-800'
+                  ? 'border-red-600 bg-red-50 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-200'
+                  : 'border-green-600 bg-green-50 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-200'
               }`}
             >
               {importStatus.message}
@@ -295,16 +387,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <button
               type="button"
               onClick={onExportAll}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#FAF9F5] border border-[#171717] hover:bg-[#F0EFE9] text-xs font-mono uppercase tracking-wider text-[#171717] transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#FAF9F5] dark:bg-[#252522] border border-[#171717] dark:border-[#F8F7F2] hover:bg-[#F0EFE9] dark:hover:bg-[#2e2e2a] text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] transition-colors"
             >
               <Download className="w-4 h-4" />
-              <span>Export All Sessions (JSON)</span>
+              <span>{t.exportAllBtn}</span>
             </button>
 
             {/* Import file */}
-            <label className="flex items-center gap-2 px-4 py-2.5 bg-[#FAF9F5] border border-[#D8D6CE] hover:border-[#171717] text-xs font-mono uppercase tracking-wider text-[#171717] cursor-pointer transition-colors">
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-[#FAF9F5] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2] text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] cursor-pointer transition-colors">
               <Upload className="w-4 h-4" />
-              <span>Import JSON Backup</span>
+              <span>{t.importBackupBtn}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -316,14 +408,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           {/* Danger zone: Clear all data */}
-          <div className="pt-6 border-t border-[#D8D6CE]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-red-300 bg-red-50/40">
+          <div className="pt-6 border-t border-[#D8D6CE] dark:border-[#33322D]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-red-300 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20">
               <div className="space-y-1">
-                <span className="font-mono text-xs uppercase tracking-wider text-red-800 font-bold block">
-                  Clear All Local Storage
+                <span className="font-mono text-xs uppercase tracking-wider text-red-800 dark:text-red-300 font-bold block">
+                  {t.clearAllLocalStorage}
                 </span>
-                <span className="text-xs text-red-700 block">
-                  Permanently erase all saved brainstorming sessions, drawings, and preferences from this device.
+                <span className="text-xs text-red-700 dark:text-red-400 block">
+                  {t.clearAllLocalStorageDesc}
                 </span>
               </div>
 
@@ -332,7 +424,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 onClick={() => setShowClearConfirm(true)}
                 className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-mono uppercase tracking-wider shrink-0 transition-colors"
               >
-                Clear all data
+                {t.clearAllDataBtn}
               </button>
             </div>
           </div>
@@ -343,9 +435,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {showClearConfirm && (
         <ConfirmationModal
           isOpen={true}
-          title="Erase All Local Data?"
-          message="This action will permanently delete all your saved sessions, sketches, and notes from your browser's IndexedDB storage. This cannot be undone."
-          confirmLabel="Permanently Delete Everything"
+          title={t.clearAllDataConfirmTitle}
+          message={t.clearAllDataConfirmMsg}
+          confirmLabel={t.clearAllDataConfirmBtn}
+          cancelLabel={t.cancelLabel}
           isDestructive={true}
           onConfirm={async () => {
             await onClearAllData();

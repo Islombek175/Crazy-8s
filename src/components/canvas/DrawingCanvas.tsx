@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import type { Stroke, ToolType } from '../../types';
+import type { Stroke, ToolType, ThemeMode } from '../../types';
 
 interface DrawingCanvasProps {
   strokes: Stroke[];
@@ -7,6 +7,7 @@ interface DrawingCanvasProps {
   activeTool: ToolType;
   brushSize: number; // 1 to 20
   readOnly?: boolean;
+  theme?: ThemeMode;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   activeTool,
   brushSize,
   readOnly = false,
+  theme = 'light',
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -23,6 +25,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const isDrawingRef = useRef(false);
   const currentStrokeRef = useRef<Stroke | null>(null);
   const sizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  const paperBgColor = theme === 'dark' ? '#1C1C1A' : '#FAF9F5';
+  const defaultPenColor = theme === 'dark' ? '#F8F7F2' : '#171717';
+  const defaultPencilColor = theme === 'dark' ? 'rgba(230, 228, 220, 0.65)' : 'rgba(40, 40, 38, 0.65)';
 
   // Render all strokes onto the canvas
   const redraw = useCallback(() => {
@@ -41,7 +47,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Warm paper fill
-    ctx.fillStyle = '#FAF9F5';
+    ctx.fillStyle = paperBgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Scale for Retina/HiDPI
@@ -64,14 +70,21 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const computedSize = Math.max(1, stroke.size * scaleFactor);
 
       if (stroke.tool === 'eraser') {
-        ctx.strokeStyle = '#FAF9F5';
+        ctx.strokeStyle = paperBgColor;
         ctx.lineWidth = computedSize * 3;
       } else if (stroke.tool === 'pencil') {
-        ctx.strokeStyle = 'rgba(40, 40, 38, 0.65)';
+        ctx.strokeStyle = defaultPencilColor;
         ctx.lineWidth = Math.max(0.75, computedSize * 0.7);
       } else {
         // Pen
-        ctx.strokeStyle = stroke.color || '#171717';
+        // Adapt stroke color if it was drawn in opposite theme or use stroke color
+        let strokeColor = stroke.color || defaultPenColor;
+        if (theme === 'dark' && (strokeColor === '#171717' || strokeColor === '#000000')) {
+          strokeColor = '#F8F7F2';
+        } else if (theme === 'light' && (strokeColor === '#F8F7F2' || strokeColor === '#ffffff')) {
+          strokeColor = '#171717';
+        }
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = computedSize;
       }
 
@@ -106,7 +119,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
       ctx.restore();
     });
-  }, [strokes]);
+  }, [strokes, paperBgColor, defaultPenColor, defaultPencilColor, theme]);
 
   // Adjust canvas buffer size based on container resize
   const updateCanvasDimensions = useCallback(() => {
@@ -165,7 +178,6 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Capture pointer
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
@@ -179,7 +191,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     currentStrokeRef.current = {
       tool: activeTool,
-      color: activeTool === 'pen' ? '#171717' : activeTool === 'pencil' ? '#333333' : '#FAF9F5',
+      color: activeTool === 'pen' ? defaultPenColor : activeTool === 'pencil' ? defaultPencilColor : paperBgColor,
       size: brushSize,
       points: [{ x, y, pressure: e.pressure || 0.5 }],
     };
@@ -231,7 +243,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full overflow-hidden select-none bg-[#FAF9F5] ${className}`}
+      className={`relative w-full h-full overflow-hidden select-none ${theme === 'dark' ? 'bg-[#1C1C1A]' : 'bg-[#FAF9F5]'} ${className}`}
     >
       <canvas
         ref={canvasRef}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Session, UserSettings, ViewState, Idea } from './types';
+import type { Session, UserSettings, ViewState, Idea, Language, ThemeMode } from './types';
 import {
   getAllSessions,
   saveSession,
@@ -55,6 +55,13 @@ export function App() {
         ]);
         setSettings(loadedSettings);
 
+        // Apply dark mode immediately to html element
+        if (loadedSettings.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+
         if (loadedSessions.length === 0) {
           // Seed initial inspirational sample session
           const sample = generateSampleSession();
@@ -75,6 +82,15 @@ export function App() {
     }
     loadData();
   }, []);
+
+  // Sync theme changes to html class
+  useEffect(() => {
+    if (settings.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.theme]);
 
   // Sync reduced motion preference to html root
   useEffect(() => {
@@ -117,6 +133,20 @@ export function App() {
     },
     []
   );
+
+  // Toggle Language handler
+  const handleToggleLanguage = async (newLang: Language) => {
+    const updated: UserSettings = { ...settings, language: newLang };
+    setSettings(updated);
+    await saveSettings(updated);
+  };
+
+  // Toggle Theme handler
+  const handleToggleTheme = async (newTheme: ThemeMode) => {
+    const updated: UserSettings = { ...settings, theme: newTheme };
+    setSettings(updated);
+    await saveSettings(updated);
+  };
 
   // Start new session
   const handleStartNewSession = (config: {
@@ -170,10 +200,11 @@ export function App() {
 
   // Duplicate session
   const handleDuplicateSession = async (session: Session) => {
+    const copySuffix = settings.language === 'uz' ? '(Nusxa)' : '(Copy)';
     const duplicated: Session = {
       ...session,
       id: `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      challenge: `${session.challenge} (Copy)`,
+      challenge: `${session.challenge} ${copySuffix}`,
       status: 'draft',
       remainingSeconds: session.durationSeconds,
       elapsedSeconds: 0,
@@ -248,7 +279,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F7F2] text-[#171717] font-editorial-body selection:bg-[#171717] selection:text-[#F8F7F2]">
+    <div className="min-h-screen flex flex-col bg-[#F8F7F2] dark:bg-[#141412] text-[#171717] dark:text-[#F8F7F2] font-editorial-body selection:bg-[#171717] selection:text-[#F8F7F2] dark:selection:bg-[#F8F7F2] dark:selection:text-[#171717] transition-colors">
       {/* Header */}
       <Header
         currentView={currentView}
@@ -263,12 +294,19 @@ export function App() {
         isSaving={isSaving}
         onOpenShortcuts={() => setShortcutsOpen(true)}
         hasActiveSession={!!activeSession}
+        language={settings.language || 'en'}
+        onToggleLanguage={handleToggleLanguage}
+        theme={settings.theme || 'light'}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Routed Content */}
       <main className="flex-1 flex flex-col min-h-0">
         {currentView === 'landing' && (
-          <LandingPage onBeginSession={() => setCurrentView('setup')} />
+          <LandingPage
+            onBeginSession={() => setCurrentView('setup')}
+            lang={settings.language || 'en'}
+          />
         )}
 
         {currentView === 'setup' && (
@@ -276,6 +314,7 @@ export function App() {
             initialSettings={settings}
             onStart={handleStartNewSession}
             onCancel={() => setCurrentView('landing')}
+            lang={settings.language || 'en'}
           />
         )}
 
@@ -285,6 +324,8 @@ export function App() {
             onUpdateSession={persistActiveSession}
             onExit={() => setCurrentView('history')}
             onCompleteSession={() => setCurrentView('review')}
+            lang={settings.language || 'en'}
+            theme={settings.theme || 'light'}
           />
         )}
 
@@ -294,6 +335,8 @@ export function App() {
             onUpdateSession={persistActiveSession}
             onReturnToWorkspace={() => setCurrentView('workspace')}
             onNewSession={() => setCurrentView('setup')}
+            lang={settings.language || 'en'}
+            theme={settings.theme || 'light'}
           />
         )}
 
@@ -305,6 +348,7 @@ export function App() {
             onDeleteSession={handleDeleteSession}
             onRenameSession={handleRenameSession}
             onStartNew={() => setCurrentView('setup')}
+            lang={settings.language || 'en'}
           />
         )}
 
@@ -323,6 +367,7 @@ export function App() {
       <KeyboardShortcutsModal
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
+        lang={settings.language || 'en'}
       />
     </div>
   );

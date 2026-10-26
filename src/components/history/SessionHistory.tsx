@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { Session } from '../../types';
+import type { Session, Language } from '../../types';
+import { getTranslation } from '../../i18n/translations';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import {
   Search,
@@ -23,6 +24,7 @@ interface SessionHistoryProps {
   onDeleteSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, newTitle: string) => void;
   onStartNew: () => void;
+  lang?: Language;
 }
 
 export const SessionHistory: React.FC<SessionHistoryProps> = ({
@@ -32,7 +34,9 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
   onDeleteSession,
   onRenameSession,
   onStartNew,
+  lang = 'en',
 }) => {
+  const t = getTranslation(lang);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -43,7 +47,6 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
     title: string;
   } | null>(null);
 
-  // Filter and sort sessions
   const filtered = sessions
     .filter((s) => s.challenge.toLowerCase().includes(searchQuery.toLowerCase().trim()))
     .sort((a, b) => {
@@ -65,26 +68,26 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F8F7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 flex flex-col bg-[#F8F7F2] dark:bg-[#141412] text-[#171717] dark:text-[#F8F7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-7xl mx-auto w-full space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D8D6CE] pb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D8D6CE] dark:border-[#33322D] pb-6">
           <div>
-            <span className="font-mono text-xs uppercase tracking-widest text-[#77756F]">
-              Archived Brainstorming Sprints
+            <span className="font-mono text-xs uppercase tracking-widest text-[#77756F] dark:text-[#88867F]">
+              {t.historyEyebrow}
             </span>
-            <h1 className="font-editorial-heading text-4xl sm:text-5xl font-normal text-[#171717] mt-1">
-              Past Sessions
+            <h1 className="font-editorial-heading text-4xl sm:text-5xl font-normal text-[#171717] dark:text-[#F8F7F2] mt-1">
+              {t.historyTitle}
             </h1>
           </div>
 
           <button
             type="button"
             onClick={onStartNew}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#171717] text-[#F8F7F2] text-xs font-mono uppercase tracking-widest hover:bg-neutral-800 transition-colors self-start md:self-auto"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#171717] text-[#F8F7F2] dark:bg-[#F8F7F2] dark:text-[#171717] text-xs font-mono uppercase tracking-widest hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors self-start md:self-auto"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New session</span>
+            <span>{t.newSession}</span>
           </button>
         </div>
 
@@ -93,13 +96,13 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative w-full sm:w-96">
-              <Search className="w-4 h-4 text-[#77756F] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#77756F] dark:text-[#88867F] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search challenges by keyword..."
-                className="w-full pl-9 pr-4 py-2 bg-[#FAF9F5] border border-[#D8D6CE] focus:border-[#171717] text-sm text-[#171717] placeholder-[#77756F] focus:outline-none"
+                placeholder={t.searchPlaceholder}
+                className="w-full pl-9 pr-4 py-2 bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] focus:border-[#171717] dark:focus:border-[#F8F7F2] text-sm text-[#171717] dark:text-[#F8F7F2] placeholder-[#77756F] dark:placeholder-[#88867F] focus:outline-none"
               />
             </div>
 
@@ -107,30 +110,30 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
             <button
               type="button"
               onClick={() => setSortOrder(sortOrder === 'recent' ? 'oldest' : 'recent')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[#FAF9F5] border border-[#D8D6CE] text-xs font-mono uppercase tracking-wider text-[#171717] hover:border-[#171717] transition-colors self-end sm:self-auto"
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] hover:border-[#171717] dark:hover:border-[#F8F7F2] transition-colors self-end sm:self-auto"
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
-              <span>Sort: {sortOrder === 'recent' ? 'Most Recent' : 'Oldest First'}</span>
+              <span>{sortOrder === 'recent' ? t.sortRecent : t.sortOldest}</span>
             </button>
           </div>
         )}
 
         {/* Sessions Grid / Empty State */}
         {filtered.length === 0 ? (
-          <div className="border border-[#D8D6CE] bg-[#FAF9F5] p-12 sm:p-20 text-center space-y-4 max-w-2xl mx-auto my-8">
-            <div className="font-editorial-heading text-4xl sm:text-5xl font-light text-[#171717]">
-              No ideas yet.
+          <div className="border border-[#D8D6CE] dark:border-[#33322D] bg-[#FAF9F5] dark:bg-[#1C1C1A] p-12 sm:p-20 text-center space-y-4 max-w-2xl mx-auto my-8">
+            <div className="font-editorial-heading text-4xl sm:text-5xl font-light text-[#171717] dark:text-[#F8F7F2]">
+              {t.noIdeasYet}
             </div>
-            <p className="font-editorial-body text-base text-[#77756F] font-light max-w-md mx-auto">
-              Every great direction begins somewhere. Give yourself eight minutes to discover your next breakthrough.
+            <p className="font-editorial-body text-base text-[#77756F] dark:text-[#88867F] font-light max-w-md mx-auto">
+              {t.noIdeasSub}
             </p>
             <div className="pt-4">
               <button
                 type="button"
                 onClick={onStartNew}
-                className="px-6 py-3 bg-[#171717] text-[#F8F7F2] text-xs font-mono uppercase tracking-widest hover:bg-neutral-800 transition-colors inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[#171717] text-[#F8F7F2] dark:bg-[#F8F7F2] dark:text-[#171717] text-xs font-mono uppercase tracking-widest hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors inline-flex items-center gap-2"
               >
-                <span>Start brainstorming</span>
+                <span>{t.startBrainstorming}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -154,18 +157,18 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
               return (
                 <div
                   key={s.id}
-                  className="group bg-[#FAF9F5] border border-[#D8D6CE] hover:border-[#171717] p-6 flex flex-col justify-between transition-all duration-150 shadow-xs"
+                  className="group bg-[#FAF9F5] dark:bg-[#1C1C1A] border border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#EDECE6] p-6 flex flex-col justify-between transition-all duration-150 shadow-xs"
                 >
                   <div className="space-y-4">
                     {/* Top Date & Duration pill */}
-                    <div className="flex items-center justify-between text-xs font-mono text-[#77756F] pb-3 border-b border-[#D8D6CE]">
+                    <div className="flex items-center justify-between text-xs font-mono text-[#77756F] dark:text-[#88867F] pb-3 border-b border-[#D8D6CE] dark:border-[#33322D]">
                       <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#171717]" />
+                        <Calendar className="w-3.5 h-3.5 text-[#171717] dark:text-[#F8F7F2]" />
                         <span>{dateStr}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />
-                        <span>{durationMin}m sprint</span>
+                        <span>{t.sprintDurationMin.replace('{min}', String(durationMin))}</span>
                       </div>
                     </div>
 
@@ -182,12 +185,12 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                               if (e.key === 'Escape') setEditingSessionId(null);
                             }}
                             autoFocus
-                            className="w-full text-base font-editorial-heading font-semibold border-b border-[#171717] bg-white px-1.5 py-0.5 focus:outline-none"
+                            className="w-full text-base font-editorial-heading font-semibold border-b border-[#171717] dark:border-[#F8F7F2] bg-white dark:bg-[#252522] text-[#171717] dark:text-[#F8F7F2] px-1.5 py-0.5 focus:outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => saveRenaming(s.id)}
-                            className="p-1 text-[#171717]"
+                            className="p-1 text-[#171717] dark:text-[#F8F7F2]"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -195,14 +198,14 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                       ) : (
                         <h3
                           onClick={() => onOpenSession(s.id)}
-                          className="font-editorial-heading text-2xl font-semibold text-[#171717] group-hover:text-black cursor-pointer leading-snug line-clamp-2"
+                          className="font-editorial-heading text-2xl font-semibold text-[#171717] dark:text-[#F8F7F2] group-hover:text-black dark:group-hover:text-white cursor-pointer leading-snug line-clamp-2"
                         >
                           "{s.challenge}"
                         </h3>
                       )}
 
                       {s.context && (
-                        <p className="mt-1 text-xs text-[#77756F] line-clamp-1 italic font-light">
+                        <p className="mt-1 text-xs text-[#77756F] dark:text-[#88867F] line-clamp-1 italic font-light">
                           {s.context}
                         </p>
                       )}
@@ -217,10 +220,10 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                             key={idea.id}
                             className={`aspect-[4/3] border flex items-center justify-center text-[9px] font-mono relative overflow-hidden ${
                               idea.isFavorite
-                                ? 'border-[#171717] bg-[#F0EFE9]'
+                                ? 'border-[#171717] dark:border-[#F8F7F2] bg-[#F0EFE9] dark:bg-[#252522]'
                                 : hasContent
-                                ? 'border-[#D8D6CE] bg-[#FAF9F5]'
-                                : 'border-[#EAE8E0] bg-[#F8F7F2] opacity-40'
+                                ? 'border-[#D8D6CE] dark:border-[#33322D] bg-[#FAF9F5] dark:bg-[#1E1E1C]'
+                                : 'border-[#EAE8E0] dark:border-[#2A2A26] bg-[#F8F7F2] dark:bg-[#141412] opacity-40'
                             }`}
                           >
                             {idea.canvasData ? (
@@ -230,12 +233,12 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <span className={hasContent ? 'text-[#171717]' : 'text-[#A09E96]'}>
+                              <span className={hasContent ? 'text-[#171717] dark:text-[#F8F7F2]' : 'text-[#A09E96] dark:text-[#55544E]'}>
                                 {String(idea.id).padStart(2, '0')}
                               </span>
                             )}
                             {idea.isFavorite && (
-                              <span className="absolute top-0.5 right-0.5 text-[8px] text-[#171717] font-bold">
+                              <span className="absolute top-0.5 right-0.5 text-[8px] text-[#171717] dark:text-[#F8F7F2] font-bold">
                                 ★
                               </span>
                             )}
@@ -245,26 +248,26 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                     </div>
 
                     {/* Stats pills */}
-                    <div className="flex items-center gap-3 text-xs font-mono text-[#77756F] pt-2">
+                    <div className="flex items-center gap-3 text-xs font-mono text-[#77756F] dark:text-[#88867F] pt-2">
                       <div className="flex items-center gap-1">
-                        <Layers className="w-3.5 h-3.5 text-[#171717]" />
-                        <span>{populatedCount}/8 Ideas</span>
+                        <Layers className="w-3.5 h-3.5 text-[#171717] dark:text-[#F8F7F2]" />
+                        <span>{populatedCount}/8 {lang === 'uz' ? 'G\'oya' : 'Ideas'}</span>
                       </div>
                       <span>•</span>
                       <div className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-[#171717]" />
-                        <span>{favCount} Favorites</span>
+                        <Star className="w-3.5 h-3.5 text-[#171717] dark:text-[#F8F7F2]" />
+                        <span>{favCount} {lang === 'uz' ? 'Sevimli' : 'Favorites'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Card Actions Footer */}
-                  <div className="mt-6 pt-4 border-t border-[#D8D6CE] flex items-center justify-between text-xs font-mono">
-                    <div className="flex items-center gap-3 text-[#77756F]">
+                  <div className="mt-6 pt-4 border-t border-[#D8D6CE] dark:border-[#33322D] flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-3 text-[#77756F] dark:text-[#88867F]">
                       <button
                         type="button"
                         onClick={() => startRenaming(s)}
-                        className="hover:text-[#171717] transition-colors"
+                        className="hover:text-[#171717] dark:hover:text-[#F8F7F2] transition-colors"
                         title="Rename challenge"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -273,8 +276,8 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                       <button
                         type="button"
                         onClick={() => onDuplicateSession(s)}
-                        className="hover:text-[#171717] transition-colors"
-                        title="Duplicate as new session"
+                        className="hover:text-[#171717] dark:hover:text-[#F8F7F2] transition-colors"
+                        title={t.duplicate}
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
@@ -282,7 +285,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                       <button
                         type="button"
                         onClick={() => setPendingDelete({ id: s.id, title: s.challenge })}
-                        className="hover:text-red-700 transition-colors"
+                        className="hover:text-red-700 dark:hover:text-red-400 transition-colors"
                         title="Delete session"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -292,9 +295,9 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenSession(s.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171717] text-[#F8F7F2] hover:bg-neutral-800 transition-colors uppercase tracking-wider text-[11px]"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171717] text-[#F8F7F2] dark:bg-[#F8F7F2] dark:text-[#171717] hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors uppercase tracking-wider text-[11px]"
                     >
-                      <span>Open</span>
+                      <span>{t.openSession}</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -309,9 +312,10 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
       {pendingDelete && (
         <ConfirmationModal
           isOpen={true}
-          title="Delete Brainstorming Session?"
-          message={`Are you sure you want to permanently delete "${pendingDelete.title}"? This action cannot be undone.`}
-          confirmLabel="Delete Session"
+          title={t.deleteSessionTitle}
+          message={t.deleteSessionMsg.replace('{title}', pendingDelete.title)}
+          confirmLabel={t.deleteSessionConfirm}
+          cancelLabel={t.cancelLabel}
           isDestructive={true}
           onConfirm={() => {
             onDeleteSession(pendingDelete.id);

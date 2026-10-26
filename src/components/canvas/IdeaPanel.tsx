@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { Idea, ToolType, Stroke } from '../../types';
+import type { Idea, ToolType, Stroke, Language, ThemeMode } from '../../types';
+import { getTranslation } from '../../i18n/translations';
 import { DrawingCanvas } from './DrawingCanvas';
 import { DrawingToolbar } from './DrawingToolbar';
 import { Star, Maximize2, Plus, X } from 'lucide-react';
@@ -16,6 +17,8 @@ interface IdeaPanelProps {
   onBrushSizeChange: (size: number) => void;
   onRequestClear: (ideaId: number) => void;
   readOnly?: boolean;
+  lang?: Language;
+  theme?: ThemeMode;
 }
 
 export const IdeaPanel: React.FC<IdeaPanelProps> = ({
@@ -30,14 +33,15 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
   onBrushSizeChange,
   onRequestClear,
   readOnly = false,
+  lang = 'en',
+  theme = 'light',
 }) => {
-  // Local redo stack for strokes in this panel
+  const t = getTranslation(lang);
   const [redoStack, setRedoStack] = useState<Stroke[]>([]);
   const [newBullet, setNewBullet] = useState('');
 
-  // Handle stroke changes
   const handleStrokesChange = (newStrokes: Stroke[], dataUrl: string) => {
-    setRedoStack([]); // New action invalidates redo stack
+    setRedoStack([]);
     onUpdate({
       ...idea,
       strokes: newStrokes,
@@ -50,8 +54,6 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
     const last = idea.strokes[idea.strokes.length - 1];
     const remaining = idea.strokes.slice(0, idea.strokes.length - 1);
     setRedoStack((prev) => [...prev, last]);
-
-    // Redraw offscreen to get updated dataUrl
     onUpdate({
       ...idea,
       strokes: remaining,
@@ -108,17 +110,19 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
   return (
     <div
       onClick={onSelect}
-      className={`group relative flex flex-col bg-[#FAF9F5] transition-all duration-150 h-full min-h-[340px] md:min-h-[380px] ${
+      className={`group relative flex flex-col transition-all duration-150 h-full min-h-[340px] md:min-h-[380px] ${
+        theme === 'dark' ? 'bg-[#1C1C1A]' : 'bg-[#FAF9F5]'
+      } ${
         isActive
-          ? 'ring-2 ring-[#171717] ring-offset-1 z-10'
-          : 'border border-[#D8D6CE] hover:border-[#77756F]'
+          ? 'ring-2 ring-[#171717] dark:ring-[#F8F7F2] ring-offset-1 dark:ring-offset-[#141412] z-10'
+          : 'border border-[#D8D6CE] dark:border-[#33322D] hover:border-[#77756F] dark:hover:border-[#5E5D57]'
       }`}
     >
       {/* Panel Top Bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#F0EFE9] border-b border-[#D8D6CE] select-none">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#F0EFE9] dark:bg-[#252522] border-b border-[#D8D6CE] dark:border-[#33322D] select-none">
         <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
           {/* Panel Number */}
-          <span className="font-mono text-xs font-semibold text-[#171717] tracking-wider">
+          <span className="font-mono text-xs font-semibold text-[#171717] dark:text-[#F8F7F2] tracking-wider">
             {panelNumber}
           </span>
 
@@ -127,9 +131,9 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
             type="text"
             value={idea.title}
             onChange={(e) => onUpdate({ ...idea, title: e.target.value })}
-            placeholder={`Idea ${panelNumber}`}
+            placeholder={t.ideaTitlePlaceholder.replace('{num}', panelNumber)}
             readOnly={readOnly}
-            className="flex-1 bg-transparent text-xs font-medium text-[#171717] placeholder-[#77756F] border-b border-transparent focus:border-[#171717] focus:outline-none px-1 py-0.5 truncate"
+            className="flex-1 bg-transparent text-xs font-medium text-[#171717] dark:text-[#F8F7F2] placeholder-[#77756F] dark:placeholder-[#88867F] border-b border-transparent focus:border-[#171717] dark:focus:border-[#F8F7F2] focus:outline-none px-1 py-0.5 truncate"
           />
         </div>
 
@@ -139,12 +143,14 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
           <button
             type="button"
             onClick={toggleFavorite}
-            title={idea.isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
-            className="p-1 text-[#171717] hover:opacity-75 transition-opacity"
+            title={idea.isFavorite ? t.starUnfavorite : t.starFavorite}
+            className="p-1 text-[#171717] dark:text-[#F8F7F2] hover:opacity-75 transition-opacity"
           >
             <Star
               className={`w-3.5 h-3.5 ${
-                idea.isFavorite ? 'fill-[#171717] text-[#171717]' : 'text-[#77756F]'
+                idea.isFavorite
+                  ? 'fill-[#171717] dark:fill-[#F8F7F2] text-[#171717] dark:text-[#F8F7F2]'
+                  : 'text-[#77756F] dark:text-[#88867F]'
               }`}
             />
           </button>
@@ -157,8 +163,8 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
                 e.stopPropagation();
                 onExpand();
               }}
-              title="Expand to Focused Mode"
-              className="p-1 text-[#77756F] hover:text-[#171717] transition-colors"
+              title={t.focusedMode}
+              className="p-1 text-[#77756F] dark:text-[#88867F] hover:text-[#171717] dark:hover:text-[#F8F7F2] transition-colors"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
@@ -168,7 +174,7 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
 
       {/* Toolbar for active panel in Draw mode */}
       {isActive && !readOnly && (
-        <div className="border-b border-[#D8D6CE]">
+        <div className="border-b border-[#D8D6CE] dark:border-[#33322D]">
           <DrawingToolbar
             activeTool={activeTool}
             onToolChange={onToolChange}
@@ -182,12 +188,13 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
             panelMode={idea.mode}
             onToggleMode={toggleMode}
             compact={true}
+            lang={lang}
           />
         </div>
       )}
 
       {/* Main Content Area: Drawing or Writing */}
-      <div className="flex-1 relative flex flex-col min-h-0 bg-[#FAF9F5]">
+      <div className="flex-1 relative flex flex-col min-h-0 bg-[#FAF9F5] dark:bg-[#1C1C1A]">
         {idea.mode === 'draw' ? (
           <DrawingCanvas
             strokes={idea.strokes}
@@ -195,43 +202,44 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
             activeTool={activeTool}
             brushSize={brushSize}
             readOnly={readOnly}
+            theme={theme}
             className="w-full h-full"
           />
         ) : (
-          <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-2.5 text-xs text-[#171717]">
+          <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-2.5 text-xs text-[#171717] dark:text-[#F8F7F2]">
             {/* Written description */}
             <div className="flex-1 flex flex-col">
-              <label className="text-[10px] uppercase font-mono tracking-wider text-[#77756F] mb-1">
-                Description / Concept
+              <label className="text-[10px] uppercase font-mono tracking-wider text-[#77756F] dark:text-[#88867F] mb-1">
+                {t.descriptionConcept}
               </label>
               <textarea
                 value={idea.description}
                 onChange={(e) => onUpdate({ ...idea, description: e.target.value })}
-                placeholder="Describe your idea or sketch in words. What makes it unique?"
+                placeholder={t.descriptionPlaceholder}
                 readOnly={readOnly}
                 rows={4}
-                className="w-full flex-1 p-2 bg-[#F8F7F2] border border-[#D8D6CE] focus:border-[#171717] focus:outline-none resize-none font-sans text-xs text-[#171717] leading-relaxed"
+                className="w-full flex-1 p-2 bg-[#F8F7F2] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] focus:border-[#171717] dark:focus:border-[#F8F7F2] focus:outline-none resize-none font-sans text-xs text-[#171717] dark:text-[#F8F7F2] leading-relaxed"
               />
             </div>
 
             {/* Bullet points */}
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-mono tracking-wider text-[#77756F]">
-                Key Elements / Bullets
+              <label className="text-[10px] uppercase font-mono tracking-wider text-[#77756F] dark:text-[#88867F]">
+                {t.keyElementsBullets}
               </label>
               <ul className="space-y-1">
                 {(idea.bulletPoints || []).map((bullet, idx) => (
                   <li
                     key={idx}
-                    className="flex items-center justify-between gap-1.5 py-0.5 px-2 bg-[#F0EFE9] border border-[#D8D6CE]"
+                    className="flex items-center justify-between gap-1.5 py-0.5 px-2 bg-[#F0EFE9] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D]"
                   >
-                    <span className="font-mono text-[10px] text-[#77756F]">•</span>
+                    <span className="font-mono text-[10px] text-[#77756F] dark:text-[#88867F]">•</span>
                     <span className="flex-1 truncate">{bullet}</span>
                     {!readOnly && (
                       <button
                         type="button"
                         onClick={() => handleRemoveBullet(idx)}
-                        className="text-[#77756F] hover:text-[#171717]"
+                        className="text-[#77756F] dark:text-[#88867F] hover:text-[#171717] dark:hover:text-[#F8F7F2]"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -246,12 +254,12 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
                     type="text"
                     value={newBullet}
                     onChange={(e) => setNewBullet(e.target.value)}
-                    placeholder="Add a bullet point..."
-                    className="flex-1 px-2 py-1 bg-[#F8F7F2] border border-[#D8D6CE] text-xs focus:border-[#171717] focus:outline-none"
+                    placeholder={t.addBulletPlaceholder}
+                    className="flex-1 px-2 py-1 bg-[#F8F7F2] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] text-xs focus:border-[#171717] dark:focus:border-[#F8F7F2] focus:outline-none text-[#171717] dark:text-[#F8F7F2]"
                   />
                   <button
                     type="submit"
-                    className="px-2 py-1 bg-[#171717] text-[#F8F7F2] hover:bg-[#333] transition-colors"
+                    className="px-2 py-1 bg-[#171717] dark:bg-[#F8F7F2] text-[#F8F7F2] dark:text-[#171717] hover:bg-[#333] dark:hover:bg-white transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -261,14 +269,14 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
 
             {/* If drawing exists, subtle indicator */}
             {idea.strokes.length > 0 && (
-              <div className="pt-2 border-t border-[#D8D6CE] flex items-center justify-between text-[11px] text-[#77756F]">
-                <span>This panel has a sketch attached ({idea.strokes.length} strokes).</span>
+              <div className="pt-2 border-t border-[#D8D6CE] dark:border-[#33322D] flex items-center justify-between text-[11px] text-[#77756F] dark:text-[#88867F]">
+                <span>{t.hasSketchNote.replace('{count}', String(idea.strokes.length))}</span>
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="underline hover:text-[#171717]"
+                  className="underline hover:text-[#171717] dark:hover:text-[#F8F7F2]"
                 >
-                  View drawing
+                  {t.viewDrawing}
                 </button>
               </div>
             )}
@@ -277,17 +285,21 @@ export const IdeaPanel: React.FC<IdeaPanelProps> = ({
       </div>
 
       {/* Footer subtle mode / stroke count tag */}
-      <div className="px-2.5 py-1 bg-[#F0EFE9] border-t border-[#D8D6CE] flex items-center justify-between text-[10px] font-mono text-[#77756F] select-none">
+      <div className="px-2.5 py-1 bg-[#F0EFE9] dark:bg-[#252522] border-t border-[#D8D6CE] dark:border-[#33322D] flex items-center justify-between text-[10px] font-mono text-[#77756F] dark:text-[#88867F] select-none">
         <span>
           {idea.mode === 'draw'
             ? idea.strokes.length > 0
-              ? `${idea.strokes.length} stroke${idea.strokes.length === 1 ? '' : 's'}`
-              : 'Blank canvas'
+              ? `${idea.strokes.length} ${lang === 'uz' ? 'chiziq' : `stroke${idea.strokes.length === 1 ? '' : 's'}`}`
+              : t.blankCanvas
             : idea.description.trim()
-            ? 'Written idea'
-            : 'Blank draft'}
+            ? t.writtenIdea
+            : t.blankDraft}
         </span>
-        {idea.isFavorite && <span className="font-semibold text-[#171717]">★ FAVORITE</span>}
+        {idea.isFavorite && (
+          <span className="font-semibold text-[#171717] dark:text-[#F8F7F2]">
+            {t.favoriteTag}
+          </span>
+        )}
       </div>
     </div>
   );

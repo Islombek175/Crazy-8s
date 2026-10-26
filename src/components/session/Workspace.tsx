@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Session, Idea, ToolType } from '../../types';
+import type { Session, Idea, ToolType, Language, ThemeMode } from '../../types';
+import { getTranslation } from '../../i18n/translations';
 import { useSessionTimer } from '../../hooks/useSessionTimer';
 import { IdeaPanel } from '../canvas/IdeaPanel';
 import { FocusedWorkspace } from '../canvas/FocusedWorkspace';
@@ -21,6 +22,8 @@ interface WorkspaceProps {
   onUpdateSession: (updated: Session) => void;
   onExit: () => void;
   onCompleteSession: () => void;
+  lang?: Language;
+  theme?: ThemeMode;
 }
 
 export const Workspace: React.FC<WorkspaceProps> = ({
@@ -28,7 +31,10 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   onUpdateSession,
   onExit,
   onCompleteSession,
+  lang = 'en',
+  theme = 'light',
 }) => {
+  const t = getTranslation(lang);
   // View mode: 'grid' or 'focused'
   const [workspaceView, setWorkspaceView] = useState<'grid' | 'focused'>('grid');
   const [activeIdeaIndex, setActiveIdeaIndex] = useState<number>(0);
@@ -39,7 +45,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
 
   // Inspiration prompt state
   const [showPromptBanner, setShowPromptBanner] = useState<boolean>(session.preferences.showPrompts);
-  const [currentPrompt, setCurrentPrompt] = useState<string>(() => getRandomPrompt());
+  const [currentPrompt, setCurrentPrompt] = useState<string>(() => getRandomPrompt(undefined, lang));
 
   // Completion modal state
   const [showCompletionOverlay, setShowCompletionOverlay] = useState<boolean>(false);
@@ -97,7 +103,6 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   // Keyboard navigation & shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if focus is in an input or textarea
       const target = e.target as HTMLElement;
       if (
         target &&
@@ -152,8 +157,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   const handleRequestClearPanel = (ideaId: number) => {
     setPendingConfirm({
       type: 'clear',
-      title: 'Clear This Panel?',
-      message: `Are you sure you want to clear Idea ${String(ideaId).padStart(2, '0')}? Existing strokes will be removed.`,
+      title: t.confirmClearPanelTitle,
+      message: t.confirmClearPanelMsg.replace('{num}', String(ideaId).padStart(2, '0')),
       action: () => {
         const target = session.ideas.find((i) => i.id === ideaId);
         if (target) {
@@ -174,8 +179,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   const handleRequestRestart = () => {
     setPendingConfirm({
       type: 'restart',
-      title: 'Restart Session?',
-      message: 'This will reset the countdown timer back to the beginning. Your existing ideas and sketches will be kept.',
+      title: t.confirmRestartTitle,
+      message: t.confirmRestartMsg,
       action: () => {
         timer.restart();
         onUpdateSession({
@@ -194,8 +199,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   const handleRequestExit = () => {
     setPendingConfirm({
       type: 'exit',
-      title: 'Exit Workspace?',
-      message: 'All your work has been automatically saved in your browser. You can return and continue at any time.',
+      title: t.confirmExitTitle,
+      message: t.confirmExitMsg,
       action: () => {
         timer.pause();
         onExit();
@@ -205,38 +210,38 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   };
 
   const nextPrompt = () => {
-    setCurrentPrompt(getRandomPrompt(currentPrompt));
+    setCurrentPrompt(getRandomPrompt(currentPrompt, lang));
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#F8F7F2] select-none">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#F8F7F2] dark:bg-[#141412] text-[#171717] dark:text-[#F8F7F2] select-none transition-colors">
       {/* Top Main Workspace Toolbar */}
-      <div className="no-print bg-[#F0EFE9] border-b border-[#D8D6CE] px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="no-print bg-[#F0EFE9] dark:bg-[#1E1E1C] border-b border-[#D8D6CE] dark:border-[#33322D] px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
         {/* Left: Back button & Brand */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleRequestExit}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#FAF9F5] border border-[#D8D6CE] hover:border-[#171717] text-xs font-mono uppercase tracking-wider text-[#171717] transition-colors"
-            title="Exit session (changes are saved)"
+            className="flex items-center gap-1 px-2.5 py-1 bg-[#FAF9F5] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2] text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] transition-colors"
+            title={t.exit}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exit</span>
+            <span className="hidden sm:inline">{t.exit}</span>
           </button>
 
-          <span className="font-editorial-heading text-xl font-bold tracking-tight text-[#171717]">
-            EIGHT
+          <span className="font-editorial-heading text-xl font-bold tracking-tight text-[#171717] dark:text-[#F8F7F2]">
+            {t.brandName}
           </span>
 
-          <span className="hidden lg:inline text-xs font-mono text-[#77756F]">
-            / CRAZY 8s WORKSPACE
+          <span className="hidden lg:inline text-xs font-mono text-[#77756F] dark:text-[#88867F]">
+            {t.workspaceTitle}
           </span>
         </div>
 
         {/* Center: Current Challenge (compact) */}
         <div className="hidden md:flex flex-1 max-w-lg mx-4 items-center justify-center">
-          <div className="px-3 py-1 bg-[#FAF9F5] border border-[#D8D6CE] text-xs font-medium text-[#171717] truncate max-w-full text-center" title={session.challenge}>
-            <span className="font-mono text-[#77756F] uppercase text-[10px] mr-1.5">Challenge:</span>
+          <div className="px-3 py-1 bg-[#FAF9F5] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] text-xs font-medium text-[#171717] dark:text-[#F8F7F2] truncate max-w-full text-center" title={session.challenge}>
+            <span className="font-mono text-[#77756F] dark:text-[#88867F] uppercase text-[10px] mr-1.5">{t.challengeCompact}</span>
             <span>"{session.challenge}"</span>
           </div>
         </div>
@@ -244,8 +249,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         {/* Right: Timer & Session Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Large Countdown Monospace Timer */}
-          <div className="flex items-center gap-2 px-3 py-1 bg-[#FAF9F5] border border-[#171717]">
-            <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-[#171717]">
+          <div className="flex items-center gap-2 px-3 py-1 bg-[#FAF9F5] dark:bg-[#252522] border border-[#171717] dark:border-[#F8F7F2]">
+            <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-[#171717] dark:text-[#F8F7F2]">
               {timer.formattedTime}
             </span>
 
@@ -254,8 +259,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               <button
                 type="button"
                 onClick={timer.pause}
-                title="Pause countdown (Space)"
-                className="p-1 hover:bg-[#F0EFE9] text-[#171717] transition-colors"
+                title={t.pauseTimer}
+                className="p-1 hover:bg-[#F0EFE9] dark:hover:bg-[#33322D] text-[#171717] dark:text-[#F8F7F2] transition-colors"
               >
                 <Pause className="w-4 h-4 fill-current" />
               </button>
@@ -263,8 +268,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               <button
                 type="button"
                 onClick={timer.resume}
-                title="Resume countdown (Space)"
-                className="p-1 hover:bg-[#F0EFE9] text-[#171717] transition-colors"
+                title={t.resumeTimer}
+                className="p-1 hover:bg-[#F0EFE9] dark:hover:bg-[#33322D] text-[#171717] dark:text-[#F8F7F2] transition-colors"
               >
                 <Play className="w-4 h-4 fill-current" />
               </button>
@@ -275,18 +280,18 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           <button
             type="button"
             onClick={() => setWorkspaceView(workspaceView === 'grid' ? 'focused' : 'grid')}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#FAF9F5] border border-[#D8D6CE] hover:border-[#171717] text-xs font-mono uppercase tracking-wider text-[#171717] transition-colors"
-            title="Toggle between Grid and Focused mode (G)"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#FAF9F5] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2] text-xs font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] transition-colors"
+            title={t.toggleGridFocused}
           >
             {workspaceView === 'grid' ? (
               <>
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Focused</span>
+                <span className="hidden sm:inline">{t.focusedMode}</span>
               </>
             ) : (
               <>
                 <Grid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">8-Grid</span>
+                <span className="hidden sm:inline">{t.gridMode}</span>
               </>
             )}
           </button>
@@ -297,10 +302,10 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             onClick={() => setShowPromptBanner(!showPromptBanner)}
             className={`p-1.5 border transition-colors ${
               showPromptBanner
-                ? 'bg-[#171717] text-[#F8F7F2] border-[#171717]'
-                : 'bg-[#FAF9F5] text-[#77756F] border-[#D8D6CE] hover:border-[#171717] hover:text-[#171717]'
+                ? 'bg-[#171717] text-[#F8F7F2] border-[#171717] dark:bg-[#F8F7F2] dark:text-[#171717] dark:border-[#F8F7F2]'
+                : 'bg-[#FAF9F5] dark:bg-[#252522] text-[#77756F] dark:text-[#88867F] border-[#D8D6CE] dark:border-[#33322D] hover:border-[#171717] dark:hover:border-[#F8F7F2]'
             }`}
-            title="Toggle inspiration prompts"
+            title={t.togglePrompts}
           >
             <Sparkles className="w-4 h-4" />
           </button>
@@ -309,8 +314,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           <button
             type="button"
             onClick={handleRequestRestart}
-            className="p-1.5 bg-[#FAF9F5] border border-[#D8D6CE] text-[#77756F] hover:text-[#171717] hover:border-[#171717] transition-colors"
-            title="Restart session timer"
+            className="p-1.5 bg-[#FAF9F5] dark:bg-[#252522] border border-[#D8D6CE] dark:border-[#33322D] text-[#77756F] dark:text-[#88867F] hover:text-[#171717] dark:hover:text-[#F8F7F2] hover:border-[#171717] dark:hover:border-[#F8F7F2] transition-colors"
+            title={t.restartTimer}
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -319,29 +324,29 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           <button
             type="button"
             onClick={onCompleteSession}
-            className="px-3 py-1.5 bg-[#171717] text-[#F8F7F2] text-xs font-mono uppercase tracking-wider hover:bg-neutral-800 transition-colors hidden sm:block"
+            className="px-3 py-1.5 bg-[#171717] text-[#F8F7F2] dark:bg-[#F8F7F2] dark:text-[#171717] text-xs font-mono uppercase tracking-wider hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors hidden sm:block"
           >
-            Review ideas
+            {t.reviewIdeas}
           </button>
         </div>
       </div>
 
       {/* Thin Progress Line */}
-      <div className="w-full h-1 bg-[#D8D6CE] relative overflow-hidden">
+      <div className="w-full h-1 bg-[#D8D6CE] dark:bg-[#33322D] relative overflow-hidden">
         <div
-          className="h-full bg-[#171717] transition-all duration-300"
+          className="h-full bg-[#171717] dark:bg-[#F8F7F2] transition-all duration-300"
           style={{ width: `${timer.progressPercent}%` }}
         />
       </div>
 
       {/* Optional Inspiration Prompt Banner */}
       {showPromptBanner && (
-        <div className="no-print bg-[#FAF9F5] border-b border-[#D8D6CE] px-4 py-2 flex items-center justify-between gap-4 text-xs">
+        <div className="no-print bg-[#FAF9F5] dark:bg-[#1C1C1A] border-b border-[#D8D6CE] dark:border-[#33322D] px-4 py-2 flex items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-mono uppercase text-[10px] tracking-wider text-[#77756F] shrink-0">
-              Prompt for Idea {String(activeIdeaIndex + 1).padStart(2, '0')}:
+            <span className="font-mono uppercase text-[10px] tracking-wider text-[#77756F] dark:text-[#88867F] shrink-0">
+              {t.promptForIdea} {String(activeIdeaIndex + 1).padStart(2, '0')}:
             </span>
-            <span className="font-editorial-heading text-sm font-semibold text-[#171717] italic truncate">
+            <span className="font-editorial-heading text-sm font-semibold text-[#171717] dark:text-[#F8F7F2] italic truncate">
               "{currentPrompt}"
             </span>
           </div>
@@ -350,14 +355,14 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             <button
               type="button"
               onClick={nextPrompt}
-              className="text-[11px] font-mono uppercase tracking-wider text-[#171717] hover:underline"
+              className="text-[11px] font-mono uppercase tracking-wider text-[#171717] dark:text-[#F8F7F2] hover:underline"
             >
-              Next prompt →
+              {t.nextPrompt}
             </button>
             <button
               type="button"
               onClick={() => setShowPromptBanner(false)}
-              className="text-[#77756F] hover:text-[#171717] ml-2"
+              className="text-[#77756F] dark:text-[#88867F] hover:text-[#171717] dark:hover:text-[#F8F7F2] ml-2"
             >
               ✕
             </button>
@@ -367,7 +372,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
 
       {/* Main Workspace Body */}
       {workspaceView === 'grid' ? (
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-[#F8F7F2]">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-[#F8F7F2] dark:bg-[#141412]">
           {/* Responsive 8-Panel Grid: Desktop 4x2, Tablet 2x4, Mobile 1-2 cols */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto h-full min-h-[700px]">
             {session.ideas.map((idea, index) => (
@@ -386,6 +391,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                 brushSize={brushSize}
                 onBrushSizeChange={setBrushSize}
                 onRequestClear={handleRequestClearPanel}
+                lang={lang}
+                theme={theme}
               />
             ))}
           </div>
@@ -402,6 +409,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           brushSize={brushSize}
           onBrushSizeChange={setBrushSize}
           onRequestClear={handleRequestClearPanel}
+          lang={lang}
+          theme={theme}
         />
       )}
 
@@ -411,7 +420,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           isOpen={true}
           title={pendingConfirm.title}
           message={pendingConfirm.message}
-          confirmLabel={pendingConfirm.type === 'clear' ? 'Clear' : pendingConfirm.type === 'restart' ? 'Restart' : 'Exit'}
+          confirmLabel={pendingConfirm.type === 'clear' ? t.clearLabel : pendingConfirm.type === 'restart' ? t.restartLabel : t.confirmLabel}
+          cancelLabel={t.cancelLabel}
           isDestructive={pendingConfirm.type === 'clear'}
           onConfirm={pendingConfirm.action}
           onCancel={() => setPendingConfirm(null)}
@@ -428,6 +438,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           }}
           onContinueEditing={() => setShowCompletionOverlay(false)}
           onStartAnother={onExit}
+          lang={lang}
         />
       )}
     </div>
